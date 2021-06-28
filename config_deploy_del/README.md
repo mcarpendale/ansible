@@ -1,4 +1,4 @@
-# Example playbooks to:
+# Pure Storage Flash Array example playbooks to:
 
 - Configure your Array,
 - Create iSCSI Subnets and VIFs

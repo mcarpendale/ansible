@@ -1,0 +1,179 @@
+vmware_validate_certs: false
+#vmware_cluster_name: lab
+vcenter_hostname: "vc01.domain.com"
+vcenter_username: "auto@domain.com"
+vcenter_password: "password"
+esxi_hostname: "mgmt-esx01.domain.com"
+esxi_username: "root"
+esxi_password: "password"
+
+iscsi_mtu: 9000
+
+pure_sn: subnet100
+pure_domain: domain.com
+pure_dns1: 10.0.0.3
+pure_dns2: 10.0.0.4
+pure_dns3: 8.8.8.8
+pure_ntp: 10.0.0.4
+
+pure_subnet:
+# Management environemnt
+  MGMT-iSCSI-A:
+    vlan: 3000
+    gateway:
+    prefix: "192.168.1.0/24"
+  MGMT-iSCSI-B:
+    vlan: 3001
+    gateway:
+    prefix: "192.168.2.0/24"
+# Customer 01 Envrionment
+  CUST01-iSCSI-A:
+    vlan: 2000
+    gateway:
+    prefix: "10.1.1.0/24"
+  CUST01-iSCSI-B:
+    vlan: 2001
+    gateway:
+    prefix: "10.1.2.0/24"
+# Customer 02 Envrionment
+  CUST02-iSCSI-A:
+    vlan: 2002
+    gateway:
+    prefix: "10.2.1.0/24"
+  CUST02-iSCSI-B:
+    vlan: 2003
+    gateway:
+    prefix: "10.2.2.0/24"
+
+purefa0_mgmt_vif:
+  ct0.eth4:
+    subnet: MGMT-iSCSI-A
+    address: 192.168.1.50
+  ct1.eth4:
+    subnet: MGMT-iSCSI-A
+    address: 192.168.1.51
+  ct0.eth5:
+    subnet: MGMT-iSCSI-B
+    address: 192.168.2.50
+  ct1.eth5:
+    subnet: MGMT-iSCSI-B
+    address: 192.168.2.51
+purefa0_cust01_vif:
+  ct0.eth4:
+    subnet: CUST01-iSCSI-A
+    address: 10.1.1.1
+  ct1.eth4:
+    subnet: CUST01-iSCSI-A
+    address: 10.1.1.2
+  ct0.eth5:
+    subnet: CUST01-iSCSI-B
+    address: 10.1.2.1
+  ct1.eth5:
+    subnet: CUST01-iSCSI-B
+    address: 10.1.2.2
+purefa0_cust02_vif:
+  ct0.eth4:
+    subnet: CUST02-iSCSI-A
+    address: 10.2.1.1
+  ct1.eth4:
+    subnet: CUST02-iSCSI-A
+    address: 10.2.1.2
+  ct0.eth5:
+    subnet: CUST02-iSCSI-B
+    address: 10.2.2.1
+  ct1.eth5:
+    subnet: CUST02-iSCSI-B
+    address: 10.2.2.2
+
+purefa1_mgmt_vif:
+  ct0.eth4:
+    subnet: MGMT-iSCSI-A
+    address: 192.168.1.52
+  ct1.eth4:
+    subnet: MGMT-iSCSI-A
+    address: 192.168.1.53
+  ct0.eth5:
+    subnet: MGMT-iSCSI-B
+    address: 192.168.2.52
+  ct1.eth5:
+    subnet: MGMT-iSCSI-B
+    address: 192.168.2.53
+purefa1_cust01_vif:
+  ct0.eth4:
+    subnet: CUST01-iSCSI-A
+    address: 10.1.1.3
+  ct1.eth4:
+    subnet: CUST01-iSCSI-A
+    address: 10.1.1.4
+  ct0.eth5:
+    subnet: CUST01-iSCSI-B
+    address: 10.1.2.3
+  ct1.eth5:
+    subnet: CUST01-iSCSI-B
+    address: 10.1.2.4
+purefa1_cust02_vif:
+  ct0.eth4:
+    subnet: CUST02-iSCSI-A
+    address: 10.2.1.3
+  ct1.eth4:
+    subnet: CUST02-iSCSI-A
+    address: 10.2.1.4
+  ct0.eth5:
+    subnet: CUST02-iSCSI-B
+    address: 10.2.2.3
+  ct1.eth5:
+    subnet: CUST02-iSCSI-B
+    address: 10.2.2.4
+
+pure_hosts_iscsi:
+  mgmt-esxi1:
+    iqn: iqn.1998-01.com.vmware:mgmt-esx01-aaaaaaa
+    personality: esxi
+  mgmt-esxi2:
+    iqn: iqn.1998-01.com.vmware:esxi2-bbbbbbb
+    personality: esxi
+  mgmt-esxi3:
+    iqn: iqn.1998-01.com.vmware:esxi3-aaaaaa
+    personality: esxi
+  winsrv01:
+    iqn: iqn.1991-05.com.microsoft:winsrv01.domain.com
+  winsrv02:
+    iqn: iqn.1991-05.com.microsoft:winsrv02.domain.com
+
+pure_host_groups:
+  mgmt-esxi:
+    - mgmt-esxi1
+    - mgmt-esxi2
+    - mgmt-esxi3
+  mgmt-winsrv:
+    - winsrv01
+    - winsrv02
+
+del_purefa_mgmt_vif:
+# Management Environment
+  ct0.eth4:
+    subnet: MGMT-iSCSI-A
+  ct1.eth4:
+    subnet: MGMT-iSCSI-A
+  ct0.eth5:
+    subnet: MGMT-iSCSI-B
+  ct1.eth5:
+    subnet: MGMT-iSCSI-B
+del_purefa_cust01_vif:
+  ct0.eth4:
+    subnet: CUST01-iSCSI-A
+  ct1.eth4:
+    subnet: CUST01-iSCSI-A
+  ct0.eth5:
+    subnet: CUST01-iSCSI-B
+  ct1.eth5:
+    subnet: CUST01-iSCSI-B
+del_purefa_cust02_vif:
+  ct0.eth4:
+    subnet: CUST02-iSCSI-A
+  ct1.eth4:
+    subnet: CUST02-iSCSI-A
+  ct0.eth5:
+    subnet: CUST02-iSCSI-B
+  ct1.eth5:
+    subnet: CUST02-iSCSI-B

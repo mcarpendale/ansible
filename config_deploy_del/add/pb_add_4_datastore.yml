@@ -1,0 +1,66 @@
+---
+ # run this to create a volume and VMFS Datastore;
+ # for: purefa[0]
+ # ansible-playbook -i inventory ./add/pb_add_4_datastore.yml -e "array=10.0.0.1 datastore_name=RedDotAC1MikeWasHere datastore_size=2T hg_name=mgmt-esxi lun_id=13"
+ # for: purefa[1]
+ # ansible-playbook -i inventory ./add/pb_add_4_datastore.yml -e "array=10.0.0.2 datastore_name=RedDotAC2MikeWasHere datastore_size=2T hg_name=mgmt-esxi lun_id=13"
+- hosts: "{{ array }}"
+  gather_facts: false
+  tasks:
+    - name: Create Volume
+      delegate_to: localhost
+      purestorage.flasharray.purefa_volume:
+        fa_url: "{{ inventory_hostname }}"
+        api_token: "{{ pure_api_token }}"
+        name: "{{ datastore_name }}"
+        size: "{{ datastore_size }}"
+
+    - name: Mask Volume
+      delegate_to: localhost
+      purestorage.flasharray.purefa_hg:
+        fa_url: "{{ inventory_hostname }}"
+        api_token: "{{ pure_api_token }}"
+        hostgroup: "{{ hg_name }}"
+        volume: "{{ datastore_name }}"
+        lun: "{{ lun_id }}"
+
+    - name: Get Volume Information
+      delegate_to: localhost
+      purestorage.flasharray.purefa_info:
+        fa_url: "{{ inventory_hostname }}"
+        api_token: "{{ pure_api_token }}"
+        gather_subset: volumes
+      register: pure_info
+
+    - name: Set NAA LUN Serial Variable
+      set_fact:
+        pure_naa: "naa.624a9370{{ pure_info['purefa_info']['volumes'][datastore_name]['serial'] | lower }}"
+
+
+
+    - name: Rescan VMWare HBA
+      delegate_to: localhost
+      vmware_host_scanhba:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: "{{ vmware_validate_certs }}"
+        refresh_storage: true
+        esxi_hostname: '{{ esxi_hostname }}'
+        #cluster_name: "{{ vmware_cluster_name }}"
+      register: vmware_rescan_info
+
+    - name: Build Datastore
+      delegate_to: localhost
+      vmware_host_datastore:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: "{{ vmware_validate_certs }}"
+        datastore_type: vmfs
+        datastore_name: "{{ datastore_name }}"
+        vmfs_device_name: "{{ pure_naa }}"
+        vmfs_version: 6
+        esxi_hostname: '{{ esxi_hostname }}'
+        #esxi_hostname: "{{ (vmware_rescan_info.result | dict2items)[0].key }}"  # Grab the First host in the cluster to configure the Datastore
+        state: present

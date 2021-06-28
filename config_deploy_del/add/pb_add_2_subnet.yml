@@ -1,0 +1,81 @@
+- hosts: purefa
+  gather_facts: false
+  tasks:
+    - name: Create subnets
+      delegate_to: localhost
+      loop: "{{ pure_subnet | default({}) | dict2items }}"
+      purestorage.flasharray.purefa_subnet:
+        fa_url: "{{ inventory_hostname }}"
+        api_token: "{{ pure_api_token }}"
+        name: "{{ item.key }}"       # make var
+        vlan: "{{ item.value.vlan }}"
+        gateway: "{{ item.value.gateway | default(omit) }}"
+        prefix: "{{ item.value.prefix }}"
+        mtu: "{{ iscsi_mtu }}"
+        state: present
+- hosts: purefa[0]
+  gather_facts: false
+  tasks:
+    - name: Configure and enable MGMT VLAN interfaces for subnet test
+      delegate_to: localhost
+      loop: "{{ purefa0_mgmt_vif | default({}) | dict2items }}"
+      purestorage.flasharray.purefa_vlan:
+        fa_url: "{{ inventory_hostname }}"
+        api_token: "{{ pure_api_token }}"
+        name: "{{ item.key }}"
+        subnet: "{{ item.value.subnet }}"
+        address: "{{ item.value.address | ipmath(1) }}"
+        state: present
+    - name: Configure and enable Customer01 VLAN interfaces for subnet test
+      delegate_to: localhost
+      loop: "{{ purefa0_cust01_vif | default({}) | dict2items }}"
+      purestorage.flasharray.purefa_vlan:
+        fa_url: "{{ inventory_hostname }}"
+        api_token: "{{ pure_api_token }}"
+        name: "{{ item.key }}"
+        subnet: "{{ item.value.subnet }}"
+        address: "{{ item.value.address | ipmath(1) }}"
+        state: present
+    - name: Configure and enable Customer02 VLAN interfaces for subnet test
+      delegate_to: localhost
+      loop: "{{ purefa0_cust02_vif | default({}) | dict2items }}"
+      purestorage.flasharray.purefa_vlan:
+        fa_url: "{{ inventory_hostname }}"
+        api_token: "{{ pure_api_token }}"
+        name: "{{ item.key }}"
+        subnet: "{{ item.value.subnet }}"
+        address: "{{ item.value.address | ipmath(1) }}"
+        state: present
+- hosts: purefa[1]
+  gather_facts: false
+  tasks:
+    - name: Configure and enable MGMT VLAN interfaces for subnet test
+      delegate_to: localhost
+      loop: "{{ purefa1_mgmt_vif | default({}) | dict2items }}"
+      purestorage.flasharray.purefa_vlan:
+        fa_url: "{{ inventory_hostname }}"
+        api_token: "{{ pure_api_token }}"
+        name: "{{ item.key }}"
+        subnet: "{{ item.value.subnet }}"
+        address: "{{ item.value.address | ipmath(1) }}"
+        state: present
+    - name: Configure and enable Customer01 VLAN interfaces for subnet test
+      delegate_to: localhost
+      loop: "{{ purefa1_cust01_vif | default({}) | dict2items }}"
+      purestorage.flasharray.purefa_vlan:
+        fa_url: "{{ inventory_hostname }}"
+        api_token: "{{ pure_api_token }}"
+        name: "{{ item.key }}"
+        subnet: "{{ item.value.subnet }}"
+        address: "{{ item.value.address | ipmath(1) }}"
+        state: present
+    - name: Configure and enable Customer02 VLAN interfaces for subnet test
+      delegate_to: localhost
+      loop: "{{ purefa1_cust02_vif | default({}) | dict2items }}"
+      purestorage.flasharray.purefa_vlan:
+        fa_url: "{{ inventory_hostname }}"
+        api_token: "{{ pure_api_token }}"
+        name: "{{ item.key }}"
+        subnet: "{{ item.value.subnet }}"
+        address: "{{ item.value.address | ipmath(1) }}"
+        state: present

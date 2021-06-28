@@ -1,0 +1,48 @@
+- hosts: purefa
+  gather_facts: false
+  tasks:
+    - name: Update Banner
+      delegate_to: localhost
+      purestorage.flasharray.purefa_banner:
+        fa_url: "{{ inventory_hostname }}"
+        api_token: "{{ pure_api_token }}"
+        banner: Welcome to the Telstra Programmable Infrastructure storage environment. ONLY authorised users are permitted to log in.
+    - name: Set DNS settings
+      delegate_to: localhost
+      purestorage.flasharray.purefa_dns:
+        fa_url: "{{ inventory_hostname }}"
+        api_token: "{{ pure_api_token }}"
+        domain: "{{ pure_domain }}"
+        nameservers:
+          - "{{ pure_dns1 }}"
+          - "{{ pure_dns2 }}"
+          - "{{ pure_dns3 }}"
+    - name: Set array NTP servers
+      delegate_to: localhost
+      purestorage.flasharray.purefa_ntp:
+        fa_url: "{{ inventory_hostname }}"
+        api_token: "{{ pure_api_token }}"
+        state: present
+        ntp_servers:
+          - "{{ pure_ntp }}"
+
+- hosts: purefa[0]
+  gather_facts: false
+  tasks:
+    - name: Set new array name
+      delegate_to: localhost
+      purestorage.flasharray.purefa_arrayname:
+        fa_url: "{{ inventory_hostname }}"
+        api_token: "{{ pure_api_token }}"
+        name: "{{ array_name }}"
+        state: present
+- hosts: purefa[1]
+  gather_facts: false
+  tasks:
+    - name: Set new array name
+      delegate_to: localhost
+      purestorage.flasharray.purefa_arrayname:
+        fa_url: "{{ inventory_hostname }}"
+        api_token: "{{ pure_api_token }}"
+        name: "{{ array_name }}"
+        state: present

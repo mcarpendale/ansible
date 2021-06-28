@@ -1,0 +1,14 @@
+- hosts: localhost
+  tasks:
+- name: Configure Flash Array
+  import_playbook: ./add/pb_add_1_config.yml
+- name: Add subnets and VIFs to FLash Array
+  import_playbook: ./add/pb_add_2_subnet.yml
+- name: Add Host Groups and Hosts to Flash Array
+  import_playbook: ./add/pb_add_3_host.yml
+
+ # run this to create a volume and VMFS Datastore
+ # for: purefa[0]
+ # ansible-playbook -i inventory ./add/pb_add_4_datastore.yml -e "array=10.0.0.1 datastore_name=RedDotAC1MikeWasHere datastore_size=2T hg_name=mgmt-esxi lun_id=13"
+ # for: purefa[1]
+ # ansible-playbook -i inventory ./add/pb_add_4_datastore.yml -e "array=10.0.0.2 datastore_name=RedDotAC2MikeWasHere datastore_size=2T hg_name=mgmt-esxi lun_id=13"

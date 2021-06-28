@@ -68,4 +68,4 @@ To clean up your environment, then run `pb_del_1_datastore.yml` to;
 - Delete Hosts and Host Group
 - Re-configure your Array
 
-    ansible-playbook -i inventory pb_add_main.yml
+   ```ansible-playbook -i inventory pb_add_main.yml```

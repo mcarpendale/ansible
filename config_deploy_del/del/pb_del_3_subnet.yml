@@ -1,0 +1,38 @@
+- hosts: purefa
+  gather_facts: false
+  tasks:
+    - name: Delete VLAN intefaces for MGMT subnets
+      delegate_to: localhost
+      loop: "{{ del_purefa_mgmt_vif | default({}) | dict2items }}"
+      purestorage.flasharray.purefa_vlan:
+        fa_url: "{{ inventory_hostname }}"
+        api_token: "{{ pure_api_token }}"
+        name: "{{ item.key }}"
+        subnet: "{{ item.value.subnet }}"
+        state: absent
+    - name: Delete VLAN intefaces for Customer 01 subnets
+      delegate_to: localhost
+      loop: "{{ del_purefa_cust01_vif | default({}) | dict2items }}"
+      purestorage.flasharray.purefa_vlan:
+        fa_url: "{{ inventory_hostname }}"
+        api_token: "{{ pure_api_token }}"
+        name: "{{ item.key }}"
+        subnet: "{{ item.value.subnet }}"
+        state: absent
+    - name: Delete VLAN intefaces for Customer 02 subnets
+      delegate_to: localhost
+      loop: "{{ del_purefa_cust02_vif | default({}) | dict2items }}"
+      purestorage.flasharray.purefa_vlan:
+        fa_url: "{{ inventory_hostname }}"
+        api_token: "{{ pure_api_token }}"
+        name: "{{ item.key }}"
+        subnet: "{{ item.value.subnet }}"
+        state: absent
+    - name: Delete subnets
+      delegate_to: localhost
+      loop: "{{ pure_subnet | default({}) | dict2items }}"
+      purestorage.flasharray.purefa_subnet:
+        fa_url: "{{ inventory_hostname }}"
+        api_token: "{{ pure_api_token }}"
+        name: "{{ item.key }}"
+        state: absent

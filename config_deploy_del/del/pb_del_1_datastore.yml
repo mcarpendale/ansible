@@ -1,0 +1,44 @@
+---
+ # run this to delete the VMFS Datastore and asscioated volume;
+ # for: purefa[0]
+ # ansible-playbook -i inventory ./del/pb_del_1_datastore.yml -e "array=10.0.0.1 datastore_name=RedDotAC1MikeWasHere hg_name=mgmt-esxi"
+ # for: purefa[1]
+ # ansible-playbook -i inventory ./del/pb_del_1_datastore.yml -e "array=10.0.0.2 datastore_name=RedDotAC2MikeWasHere hg_name=mgmt-esxi"
+- hosts: "{{ array }}"
+  gather_facts: false
+  tasks:
+    - name: Remove/Umount Datastores from ESXi
+      delegate_to: localhost
+      community.vmware.vmware_host_datastore:
+        validate_certs: false
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        esxi_hostname: "{{ esxi_hostname }}"
+        datastore_name: '{{ datastore_name }}'
+        state: absent
+    - name: Delete Volume from Host Group
+      delegate_to: localhost
+      purestorage.flasharray.purefa_hg:
+        fa_url: "{{ inventory_hostname }}"
+        api_token: "{{ pure_api_token }}"
+        hostgroup: "{{ hg_name }}"
+        volume: "{{ datastore_name }}"
+        state: absent
+
+    - name: Delete volume from the array
+      delegate_to: localhost
+      purestorage.flasharray.purefa_volume:
+        fa_url: "{{ inventory_hostname }}"
+        api_token: "{{ pure_api_token }}"
+        name: "{{ datastore_name }}"
+        state: absent
+        eradicate: true
+
+        
+
+
+
+
+
+

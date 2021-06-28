@@ -1,0 +1,27 @@
+- hosts: purefa
+  gather_facts: false
+  tasks:
+    - name: Remove Host Groups
+      delegate_to: localhost
+      loop: "{{ pure_host_groups | default({}) | dict2items }}"
+      purestorage.flasharray.purefa_hg:
+        fa_url: "{{ inventory_hostname }}"
+        api_token: "{{ pure_api_token }}"
+        hostgroup: "{{ item.key }}"
+        state: absent
+
+    - name: Remove iSCSI Hosts
+      delegate_to: localhost
+      loop: "{{ pure_hosts_iscsi | default({}) | dict2items }}"
+      purestorage.flasharray.purefa_host:
+        fa_url: "{{ inventory_hostname }}"
+        api_token: "{{ pure_api_token }}"
+        host: "{{ item.key }}"
+        state: absent
+
+    - name: Update Banner
+      delegate_to: localhost
+      purestorage.flasharray.purefa_banner:
+        fa_url: "{{ inventory_hostname }}"
+        api_token: "{{ pure_api_token }}"
+        banner: "{{ banner }}"

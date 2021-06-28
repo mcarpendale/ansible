@@ -1,0 +1,22 @@
+ # run this PB with;
+ # for: purefa[0] 
+ # ansible-playbook -i inventory pb_remoteassist_off.yml -e "array=purefa[0]" 
+
+ # for: purefa[1] 
+ # ansible-playbook -i inventory pb_remoteassist_off.yml -e "array=purefa[1]" 
+- hosts: "{{ array }}"
+  gather_facts: false
+  tasks:
+    - name: Disable Remote Assist port
+      delegate_to: localhost
+      purestorage.flasharray.purefa_ra:
+        fa_url: "{{ inventory_hostname }}"
+        api_token: "{{ pure_api_token }}"
+        state: disable
+      register: result
+    - name: Print Results
+      debug:
+        var: result
+    - name: Print remote assist
+      debug:
+        msg: "Remote Assist: {{ result.changed }}"

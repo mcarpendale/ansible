@@ -1,0 +1,153 @@
+---
+##############################################
+# Automated live NDU volume migration of an ESXi Server
+#
+# Prepare Script
+#
+# => Get source FlashArray info
+# => Create volume for migration
+# => Get serial number AND canonical_name of migration volume
+# => Create “Fact” canonical_name
+# => Gather iSCSI configuration information of ESXi host
+# => Create “Fact” iSCSI iqn
+# => Create new ESXi Migration host on the source array
+# => Create hostgroup on the source array
+# => Add hosts and volumes the hostgroup on the source array
+# => Recan HBA's for a given ESXi host and refresh storage system objects
+# => Mount VMFS datastores to ESXi
+#############################################################################
+
+- name: Create volume for migration example
+  hosts: localhost
+  gather_facts: true
+  collections:
+  - purestorage.flasharray
+  - community.vmware
+  vars_files:
+    - vars.yaml
+  tasks:
+#  - name: Get source FlashArray info
+#    purefa_info:
+#      gather_subset:
+#      - minimum
+#      - network
+#      - interfaces
+#      fa_url: "{{ src_array_ip }}"
+#      api_token: "{{ src_array_api }}"
+#    register: src_array_info
+
+    - name: Create volume for migration
+      purefa_volume:
+        name: "{{ migration_volume01 }}"
+        size: 10G
+        fa_url: "{{ src_array_ip }}"
+        api_token: "{{ src_array_api }}"
+      register: naa_data
+
+  #  - name: print naa Data
+  #    debug:
+  #      var: naa_data
+
+    - name: Get serial number AND canonical_name of migration volume
+      purefa_info:
+        gather_subset: volumes
+        fa_url: "{{ src_array_ip }}"
+        api_token: "{{ src_array_api }}"
+      register: volumes_data
+
+  #  - name: print Volume Data
+  #    debug:
+  #      var: volumes_data
+
+    - name: Set Fact Volume Serial
+      set_fact:
+        volume_serial: "{{ volumes_data.purefa_info.volumes[migration_volume01].serial }}"
+  #      volume_serial: "{{ volumes_data.purefa_info.volumes[migration_volume02].serial }}"
+
+    - name: print volume_serial fact
+      debug:
+        var: volume_serial
+
+    - name: Set Fact NAA
+      set_fact:
+        naa: "{{ volumes_data.purefa_info.volumes[migration_volume01].page83_naa }}"
+
+    - name: print naa fact
+      debug:
+        var: naa
+
+    - name: Gather iSCSI configuration information of ESXi host
+      community.vmware.vmware_host_iscsi_info:
+        validate_certs: false
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_user }}"
+        password: "{{ vcenter_password }}"
+        esxi_hostname: "{{ esxi_hostname }}"
+      register: iscsi_info
+
+    - name: Set iqn fact
+      set_fact:
+        iqn_name: "{{ iscsi_info.iscsi_properties.iscsi_name }}"
+
+    - name: Create new ESXi Migration host on the source array
+      purefa_host:
+        name: "{{ migration_host }}"
+        personality: esxi
+        protocol: iscsi
+        iqn:
+#          - iqn.1998-01.com.vmware:mgmt-esx01-6501c66f
+          - '{{ iqn_name }}'
+        fa_url: "{{ src_array_ip }}"
+        api_token: "{{ src_array_api }}"
+
+    - name: Create hostgroup on the source array
+      purefa_hg:
+        hostgroup: "{{ migration_host_group }}"
+        fa_url: "{{ src_array_ip }}"
+        api_token: "{{ src_array_api }}"
+
+    - name: Add hosts and volumes the hostgroup on the source array
+      purefa_hg:
+        hostgroup: "{{ migration_host_group }}"
+        host:
+          - "{{ migration_host }}"
+        volume: "{{ migration_volume01 }}"
+        lun: 12
+        fa_url: "{{ src_array_ip }}"
+        api_token: "{{ src_array_api }}"
+      register: lun_id
+
+  #  - name: print LUN ID
+  #    debug:
+  #      var: lun_id
+
+    - name: Recan HBA's for a given ESXi host and refresh storage system objects
+      community.vmware.vmware_host_scanhba:
+        validate_certs: false
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_user }}'
+        password: '{{ vcenter_password }}'
+        esxi_hostname: '{{ esxi_hostname }}'
+        refresh_storage: true
+      delegate_to: localhost
+
+    - name: Mount VMFS datastores to ESXi
+      community.vmware.vmware_host_datastore:
+        validate_certs: false
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_user }}'
+        password: '{{ vcenter_password }}'
+        datastore_name: '{{ migration_datastore_name }}'
+        datastore_type: '{{ migration_datastore_type }}'
+        vmfs_device_name: '{{ naa | lower }}'
+        vmfs_version: 6
+        esxi_hostname: '{{ esxi_hostname }}'
+        state: present
+      delegate_to: localhost
+
+    - name: Print Message
+      debug:
+        msg: "Envrionment prepared! Ready to migrate"
+
+    - name: Pause
+      pause:

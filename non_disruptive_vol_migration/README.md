@@ -1,7 +1,11 @@
-# # Pure Storage Flash Array NON Disruptive Volume Migrations demo
-- Prepare Envrionment
-- Migrate Volume
-- Clean up
+# Pure Storage Flash Array NON Disruptive Volume Migrations demo
+This NON Disruptive Volume Migration demo/example for vSphere or esxi builds off the work Simon has done [`here`](https://github.com/PureStorage-OpenConnect/ansible-playbook-examples/tree/master/flasharray/live-migration)
+
+
+This playbook will
+- Prepare the environment
+- Migrate the volume (`non disruptively`)
+- Clean up the environment
 
 ## Requirements
 ### The Pure Storage FlashArray collection depends upon:
@@ -17,5 +21,40 @@
 - pycountry
 
 ### VMware community collection depends upon following third party libraries:
-* Pyvmomi >= 6.7.1.2018.12
-* vSphere Automation SDK for Python
+- Pyvmomi >= 6.7.1.2018.12
+- vSphere Automation SDK for Python
+
+### Hardware
+- 2 x FlashArray (source and destination) with iSCSI connectivity, on the same VLAN
+- FlashArray's capable of being connected in an ActiveCluster
+- Host with iSCSI connectivity on same VLAN as FlashArray iSCSI network
+
+## Pre-Requisites
+- Update the ``vars.yaml`` file with the correct for the source and destination array
+``` YAML
+src_array_ip: 10.0.0.1
+src_array_api: 84f1db69-0000-1111-2222-33333333333d
+dst_array_ip: 10.0.0.2
+dst_array_api: 84f1db69-0000-1111-2222-33333333333e
+  ```
+
+## Running the demo/example
+To create the example volume used in the main migration run the following playbook:
+  > `1_prepare-vol.yaml`
+
+To perform the actual data migration run::
+> `2_migrate-vol.yaml`
+
+To remove all parts of this demo after successful completion run::
+> `3_cleanup.yaml`
+
+You can clean up a `failed` prepare with:
+> `4_prepare-fail-clean.yaml`
+
+If the migration `fails` you can use the below playbook to clean up your environment;
+> `5_migration-fail-clean.yaml`
+
+## Enhancements
+At some point I'll add in the following
+- deploy VM to the datastore/volume being migrated
+- execute random write command on the VM to introduce load and show Active Cluster mirrored writes

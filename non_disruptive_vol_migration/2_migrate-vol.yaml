@@ -1,0 +1,219 @@
+##############################################
+# Automated live NDU volume migration of an ESXi Server
+#
+# Migrate Script
+#
+# => Get source FlashArray info
+# => Get destination FlashArray info
+# => Create Active Cluster migration pod on source array
+# => Move migration volume to migration pod
+# => Stretch migration pod to destination array
+# => Wait for Active Cluster pod to sync
+# => Create host object on destination array
+# => Create empty hostgroup on destination array
+# => Add hosts and Volumes to the hostgroup on destination array
+# => Recan HBA's for a given ESXi host and refresh storage system objects
+# => PAUSE - Volume fully sync'ed and ready for removal from source array
+# => Disconnect migration volume from host on source array
+# => Delete hostgroup from source array
+# => Delete host from source array
+# => Unstretch pod from source array
+# => Move migrated volume out of pod on destination array
+# => Recan HBA's for a given ESXi host and refresh storage system objects
+# => PAUSE - Volume fully migrated to destination array. Ready to clean up both arrays
+# => Eradicate migration pod on destination array
+# => Cleanup hanging migration pod on source array
+# => PAUSE - Clean up is now complete on both arrays. Volume has been migrated. Worklaod still running. Demo is now complete
+#############################################################################- name: Live migration using ActiveCluster
+- name: Live migration using ActiveCluster
+  hosts: localhost
+  gather_facts: true
+  collections:
+  - purestorage.flasharray
+  - community.vmware
+  vars_files:
+    - vars.yaml
+  tasks:
+    - name: Get source FlashArray info
+      purefa_info:
+        gather_subset:
+          - minimum
+          - network
+          - interfaces
+        fa_url: "{{ src_array_ip }}"
+        api_token: "{{ src_array_api }}"
+      register: src_array_info
+
+    - name: Get destination FlashArray info
+      purefa_info:
+        gather_subset:
+          - minimum
+          - network
+          - interfaces
+        fa_url: "{{ dst_array_ip }}"
+        api_token: "{{ dst_array_api }}"
+      register: dst_array_info
+
+    - name: Create Active Cluster migration pod on source array
+      purefa_pod:
+        name: "{{ migration_pod }}"
+        fa_url: "{{ src_array_ip }}"
+        api_token: "{{ src_array_api }}"
+
+    - name: Move migration volume to migration pod
+      purefa_volume:
+        name: "{{ migration_volume01 }}"
+        move: "{{ migration_pod }}"
+        fa_url: "{{ src_array_ip }}"
+        api_token: "{{ src_array_api }}"
+
+    - name: Stretch migration pod to destination Flasharray
+      purefa_pod:
+        name: "{{ migration_pod }}"
+        stretch: "{{ dst_array_info['purefa_info']['default']['array_name'] }}"
+        fa_url: "{{ src_array_ip }}"
+        api_token: "{{ src_array_api }}"
+
+    - name: Wait for Active Cluster pod to sync
+      purefa_info:
+        gather_subset: pods
+        fa_url: "{{ src_array_ip }}"
+        api_token: "{{ src_array_api }}"
+      register: output
+      retries: 40
+      delay: 5
+      until: "output | json_query('purefa_info.pods.\"{{ migration_pod }}\".arrays[].status') == ['online', 'online']"
+
+    - name: Create host object on destination array
+      purefa_host:
+        name: "{{ migration_host }}"
+        personality: esxi
+        protocol: iscsi
+        iqn:  ####### Hardcoded IQN here - on completion pull from var:iscsi_info
+          - iqn.1998-01.com.vmware:mgmt-esx01-6501c66f
+        fa_url: "{{ dst_array_ip }}"
+        api_token: "{{ dst_array_api }}"
+
+    - name: Create empty hostgroup on destination array
+      purefa_hg:
+        hostgroup: "{{ migration_host_group }}"
+        fa_url: "{{ dst_array_ip }}"
+        api_token: "{{ dst_array_api }}"
+
+    - name: Add hosts and Volumes to the hostgroup on destination array
+      purefa_hg:
+        hostgroup: "{{ migration_host_group }}"
+        host:
+          - "{{ migration_host }}"
+        volume: "{{ migration_pod }}::{{ migration_volume01 }}"
+        lun: "{{ migration_lun_id }}"
+        fa_url: "{{ dst_array_ip }}"
+        api_token: "{{ dst_array_api }}"
+      register: lun_id
+
+    - name: Recan HBA's for a given ESXi host and refresh storage system objects
+      community.vmware.vmware_host_scanhba:
+        validate_certs: false
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_user }}'
+        password: '{{ vcenter_password }}'
+        esxi_hostname: '{{ esxi_hostname }}'
+        refresh_storage: true
+      delegate_to: localhost
+
+
+    - name: Debug
+      debug:
+        msg: "Volume fully sync'ed and ready for removal from source array"
+
+    - name: Pause
+      pause:
+
+    - name: Disconnect migration volume from host on source array
+      purefa_hg:
+        hostgroup: "{{ migration_host_group }}"
+        volume: "{{ migration_pod }}::{{ migration_volume01 }}"
+        host:
+          - "{{ migration_host }}"
+        state: absent
+        fa_url: "{{ src_array_ip }}"
+        api_token: "{{ src_array_api }}"
+
+  # delete hg
+    - name: Delete hostgroup from source array
+      purefa_hg:
+        hostgroup: "{{ migration_host_group }}"
+        fa_url: "{{ src_array_ip }}"
+        api_token: "{{ src_array_api }}"
+        state: absent
+
+    - name: Delete host from source array
+      purefa_host:
+        name: "{{ migration_host }}"
+        state: absent
+        fa_url: "{{ src_array_ip }}"
+        api_token: "{{ src_array_api }}"
+
+    - name: Unstretch pod from source array
+      purefa_pod:
+        name: "{{ migration_pod }}"
+        state: absent
+        stretch: "{{ src_array_info['purefa_info']['default']['array_name'] }}"
+        fa_url: "{{ src_array_ip }}"
+        api_token: "{{ src_array_api }}"
+
+    - name: Move migrated volume out of pod on destination array
+      purefa_volume:
+        name: '{{ migration_pod }}::{{ migration_volume01 }}'
+        move: local
+        fa_url: "{{ dst_array_ip }}"
+        api_token: "{{ dst_array_api }}"
+
+    - name: Recan HBA's for a given ESXi host and refresh storage system objects
+      community.vmware.vmware_host_scanhba:
+        validate_certs: false
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_user }}'
+        password: '{{ vcenter_password }}'
+        esxi_hostname: '{{ esxi_hostname }}'
+        refresh_storage: true
+      delegate_to: localhost
+
+    - name: Debug
+      debug:
+        msg: "Volume fully migrated to destination array. Ready to clean up both arrays."
+
+    - name: Pause
+      pause:
+
+    - name: Eradicate migration pod on destination array
+      purefa_pod:
+        name: "{{ migration_pod }}"
+        state: absent
+        eradicate: true
+        fa_url: "{{ dst_array_ip }}"
+        api_token: "{{ dst_array_api }}"
+
+    - name: Cleanup hanging migration pod on source array
+      purefa_pod:
+        name: "{{ migration_pod }}.restretch"
+        state: absent
+        eradicate: true
+        fa_url: "{{ src_array_ip }}"
+        api_token: "{{ src_array_api }}"
+
+  #  - name: Disconnect arrays from ActiveCluster mode
+  #    purefa_connect:
+  #      target_url: "{{ dst_array_ip }}"
+  #      target_api: "{{ dst_array_api }}"
+  #      state: absent
+  #      fa_url: "{{ src_array_ip }}"
+  #      api_token: "{{ src_array_api }}"
+
+
+    - name: Debug
+      debug:
+        msg: "Clean up is now complete on both arrays. Volume has been migrated. Worklaod still running. Demo is now complete"
+
+    - name: Pause
+      pause:

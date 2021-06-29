@@ -1,0 +1,77 @@
+---
+##############################################
+# Automated live NDU volume migration of an ESXi Server
+#
+# Cleanup Script
+#
+# => Get destination array information
+# => Create a “Fact” volume_serial
+# => Remove/Umount Datastores from a ESXi
+# => Delete host group from destination array
+# => Delete host from destination array
+# => Delete migrated volume from destination array
+# => PAUSE - Clean up is now complete!!
+#############################################################################
+
+- name: Cleanup environment after migration complete
+  hosts: localhost
+  gather_facts: true
+  collections:
+  - purestorage.flasharray
+  - community.vmware
+  vars_files:
+    - vars.yaml
+  tasks:
+    - name: Get destination array information
+      purefa_info:
+        gather_subset:
+          - network
+          - volumes
+        fa_url: "{{ dst_array_ip }}"
+        api_token: "{{ dst_array_api }}"
+      register: dst_array_info
+
+    - name: Set Fact Volmen Serial
+      set_fact:
+        volume_serial: "{{ dst_array_info.purefa_info.volumes[migration_volume01].serial }}"
+
+    - name: Remove/Umount Datastores from a ESXi
+      community.vmware.vmware_host_datastore:
+        validate_certs: false
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_user }}"
+        password: "{{ vcenter_password }}"
+        esxi_hostname: "{{ esxi_hostname }}"
+        datastore_name: '{{ migration_datastore_name }}'
+        state: absent
+      delegate_to: localhost
+
+    - name: Delete host group from destination array
+      purefa_hg:
+        hostgroup: "{{ migration_host_group }}"
+        state: absent
+        fa_url: "{{ dst_array_ip }}"
+        api_token: "{{ dst_array_api }}"
+
+    - name: Delete host from destination array
+      purefa_host:
+        name: "{{ migration_host }}"
+        state: absent
+        fa_url: "{{ dst_array_ip }}"
+        api_token: "{{ dst_array_api }}"
+
+
+    - name: Delete migrated volume from destination array
+      purefa_volume:
+        name: "{{ migration_volume01 }}"
+        state: absent
+        eradicate: true
+        fa_url: "{{ dst_array_ip }}"
+        api_token: "{{ dst_array_api }}"
+
+    - name: Print Message
+      debug:
+        msg: "Clean up is now complete!!"
+
+    - name: Pause
+      pause:

@@ -1,0 +1,23 @@
+    src_array_ip: 10.0.0.1
+    src_array_api: 84f1db69-0000-1111-2222-33333333333d
+    dst_array_ip: 10.0.0.2
+    dst_array_api: 84f1db69-0000-1111-2222-33333333333e
+    migration_volume01: esxi-mig-test01
+    migration_volume02: esxi-mig-test02
+    migration_pod: esxi-mig-pod
+    migration_host: mgmt-esx01-mig
+    migration_host_group: esxi-vol-migration
+    migration_lun_id: 12
+    src_iscsi_port: ct1.eth4
+    dst_iscsi_port: ct0.eth8
+    mount_path: /mnt/mig-test
+    
+
+    vcenter_hostname: "srvvc01.purestorage.int"
+    vcenter_user: "auto@purestorage.int"
+    vcenter_password: "P@ssw0rd"
+    esxi_hostname: "mgmt-esx01.purestorage.int"
+    esxi_username: "root"
+    esxi_password: "P@ssw0rd"
+    migration_datastore_name: "mig-ds-01"
+    migration_datastore_type: "vmfs"

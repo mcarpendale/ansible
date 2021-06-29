@@ -1,0 +1,45 @@
+
+---
+- name: Clean up failed prepare
+  hosts: localhost
+  gather_facts: true
+  collections:
+  - purestorage.flasharray
+  - community.vmware
+  vars_files:
+    - vars.yaml
+  tasks:
+    - name: Remove/Umount Datastores from a ESXi
+      community.vmware.vmware_host_datastore:
+        validate_certs: false
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_user }}"
+        password: "{{ vcenter_password }}"
+        esxi_hostname: "{{ esxi_hostname }}"
+        datastore_name: '{{ migration_datastore_name }}'
+        state: absent
+      delegate_to: localhost
+
+    - name: Delete host group from source array
+      purefa_hg:
+        hostgroup: "{{ migration_host_group }}"
+        state: absent
+        fa_url: "{{ src_array_ip }}"
+        api_token: "{{ src_array_api }}"
+
+    - name: Delete host from source array
+      purefa_host:
+        name: "{{ migration_host }}"
+        state: absent
+        fa_url: "{{ src_array_ip }}"
+        api_token: "{{ src_array_api }}"
+
+
+    - name: Delete migrated volume from source array
+      purefa_volume:
+        name: "{{ migration_volume01 }}"
+        state: absent
+        eradicate: true
+        fa_url: "{{ src_array_ip }}"
+        api_token: "{{ src_array_api }}"
+    

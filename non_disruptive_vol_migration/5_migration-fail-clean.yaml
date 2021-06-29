@@ -1,0 +1,82 @@
+---
+- name: Clean up failed migration
+  hosts: localhost
+  gather_facts: true
+  collections:
+  - purestorage.flasharray
+  - community.vmware
+  vars_files:
+    - vars.yaml
+  tasks:
+    - name: Disconnect migration volume from host on source array
+      purefa_hg:
+        hostgroup: "{{ migration_host_group }}"
+        volume: "{{ migration_pod }}::{{ migration_volume01 }}"
+        host:
+          - "{{ migration_host }}"
+        state: absent
+        fa_url: "{{ src_array_ip }}"
+        api_token: "{{ src_array_api }}"
+
+    - name: Delete hostgroup from source array
+      purefa_hg:
+        hostgroup: "{{ migration_host_group }}"
+        fa_url: "{{ src_array_ip }}"
+        api_token: "{{ src_array_api }}"
+        state: absent
+
+    - name: Delete host from source array
+      purefa_host:
+        name: "{{ migration_host }}"
+        state: absent
+        fa_url: "{{ src_array_ip }}"
+        api_token: "{{ src_array_api }}"
+
+    - name: Unstretch pod from source array
+      purefa_pod:
+        name: "{{ migration_pod }}"
+        state: absent
+        stretch: "{{ src_array_info['purefa_info']['default']['array_name'] }}"
+        fa_url: "{{ src_array_ip }}"
+        api_token: "{{ src_array_api }}"
+
+    - name: Move migrated volume out of pod on destination array
+      purefa_volume:
+        name: '{{ migration_pod }}::{{ migration_volume01 }}'
+        move: local
+        fa_url: "{{ dst_array_ip }}"
+        api_token: "{{ dst_array_api }}"
+
+    - name: Recan HBA's for a given ESXi host and refresh storage system objects
+      community.vmware.vmware_host_scanhba:
+        validate_certs: false
+        hostname: '{{ vcenter_hostname }}'
+        username: '{{ vcenter_user }}'
+        password: '{{ vcenter_password }}'
+        esxi_hostname: '{{ esxi_hostname }}'
+        refresh_storage: true
+      delegate_to: localhost
+
+    - name: Eradicate migration pod on destination array
+      purefa_pod:
+        name: "{{ migration_pod }}"
+        state: absent
+        eradicate: true
+        fa_url: "{{ dst_array_ip }}"
+        api_token: "{{ dst_array_api }}"
+
+    - name: Cleanup hanging migration pod on source array
+      purefa_pod:
+        name: "{{ migration_pod }}.restretch"
+        state: absent
+        eradicate: true
+        fa_url: "{{ src_array_ip }}"
+        api_token: "{{ src_array_api }}"
+
+  #  - name: Disconnect arrays from ActiveCluster mode
+  #    purefa_connect:
+  #      target_url: "{{ dst_array_ip }}"
+  #      target_api: "{{ dst_array_api }}"
+  #      state: absent
+  #      fa_url: "{{ src_array_ip }}"
+  #      api_token: "{{ src_array_api }}"

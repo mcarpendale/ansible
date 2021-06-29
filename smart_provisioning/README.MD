@@ -31,4 +31,4 @@ arrays:
 To create the demo/example volume run the following playbook:
  > `simple_sp_example.yaml`
 
-Play will pause, waiting for `manual` intervention. Upon `continue`, volume will be *destroyed* and **eradicated
+Play will pause, waiting for `manual` intervention. Upon `continue`, volume will be *destroyed* and **eradicated**

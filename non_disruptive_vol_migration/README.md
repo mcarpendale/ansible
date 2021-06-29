@@ -1,4 +1,4 @@
-# Pure Storage Flash Array NON Disruptive Volume Migrations demo
+# Pure Storage Flash Array NON Disruptive Volume Migration demo
 This NON Disruptive Volume Migration demo/example for vSphere or esxi builds off the work Simon has done [`here`](https://github.com/PureStorage-OpenConnect/ansible-playbook-examples/tree/master/flasharray/live-migration)
 
 
@@ -40,7 +40,7 @@ dst_array_api: 84f1db69-0000-1111-2222-33333333333e
 
 ## Running the demo/example
 To create the example volume used in the main migration run the following playbook:
-  > `1_prepare-vol.yaml`
+ > `1_prepare-vol.yaml`
 
 To perform the actual data migration run::
 > `2_migrate-vol.yaml`

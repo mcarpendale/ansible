@@ -29,20 +29,15 @@
         #cluster_name: "{{ vmware_cluster_name }}"
 #      register: vmware_rescan_info
 
-- hosts: localhost
-  gather_facts: false
-  vars_files:
-    - ./inventory/group_vars/purefa.yml
-  tasks:
-  - name: Expand the partition number 1 in the datastore capacity using free all capacity up to
-    delegate_to: localhost
-    community.vmware.vmware_host_datastore_resize:
-      hostname: "{{ vcenter_hostname }}"
-      username: "{{ vcenter_username }}"
-      password: "{{ vcenter_password }}"
-      validate_certs: "{{ vmware_validate_certs }}"
-      esxi_hostname: "{{ esxi_hostname }}"
-      datastore: "{{ datastore_name }}"
-      expand:
-        partition_number: 1
-        resize_gb: all     
+# PR 915
+    - name: Expand Datastore
+      delegate_to: localhost
+      vmware_host_datastore:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_username }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: "{{ vmware_validate_certs }}"
+        datastore_name: "{{ datastore_name }}"
+        esxi_hostname: '{{ esxi_hostname }}'
+        auto_expand: True
+        #esxi_hostname: "{{ (vmware_rescan_info.result | dict2items)[0].key }}"  # Grab the First host in the cluster to configure the Datastore

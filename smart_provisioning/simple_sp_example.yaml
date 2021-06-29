@@ -1,0 +1,26 @@
+- name: Pure Storage smart provisioning example - based on array capacity
+  hosts: localhost
+  gather_facts: no
+  vars:
+          array_usage: []     # Do not remove - required by the role
+  roles:
+    - role: sp
+
+  tasks:
+  - name: Provisioning to array {{ use_name }} - Flash Array at {{ use_capacity[:5] }}% capacity
+    purefa_volume:
+      fa_url: "{{ use_url }}"
+      api_token: "{{ use_api }}"
+      name: lb_test
+      size: 50G
+
+  - name: Pause
+    pause:
+
+  - name: Delete Volume on array {{ use_name }}
+    purefa_volume:
+      fa_url: "{{ use_url }}"
+      api_token: "{{ use_api }}"
+      name: lb_test
+      state: absent
+      eradicate: true   # NOTE: Eradicate is only used for demo and testing purposes

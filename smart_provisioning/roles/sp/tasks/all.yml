@@ -1,0 +1,26 @@
+---
+  - name: Get capacity information for {{ url }}
+    purefa_info:
+      gather_subset:
+      - minimum
+      - capacity
+      fa_url: "{{ url }}"
+      api_token: "{{ api }}"
+    register: array_info
+
+  - name: Set Fact _array_usage
+    set_fact:
+      _array_usage: "{{ {'id': array_usage|length, 'url': url, 'api': api, 'name': array_info.purefa_info.default.array_name, 'usage': ((((array_info.purefa_info.capacity.total_capacity - array_info.purefa_info.capacity.free_space) / array_info.purefa_info.capacity.total_capacity) * 100))} }}"
+#  - name: Print _array_usage
+#    debug:
+#      var: _array_usage
+  - name: Print _array_usage HR
+    debug:
+      msg: Array {{ _array_usage.name }} is at {{ _array_usage.usage | round(2) }}% capacity
+  - name: Set Fact array_usage
+    set_fact:
+      array_usage: "{{ array_usage + [_array_usage] }}"
+#  - name: Print array_usage
+#    debug:
+#      var: array_usage
+

@@ -4,6 +4,7 @@ This NON Disruptive Volume Migration demo/example for vSphere or esxi builds off
 
 This playbook will
 - Prepare the environment
+- Deploy a VM to the migration Datastore
 - Migrate the volume (`non disruptively`)
 - Clean up the environment
 
@@ -40,19 +41,25 @@ dst_array_api: 84f1db69-0000-1111-2222-33333333333e
 
 ## Running the demo/example
 To create the example volume used in the main migration run the following playbook:
- > `1_prepare-vol.yaml`
+> `1_prepare-vol.yaml`
 
-To perform the actual data migration run::
-> `2_migrate-vol.yaml`
+To to deploy a VM so the VMFS Datastore has IO, run;:
+> `2_deploy-vm-for-migration.yaml`
 
-To remove all parts of this demo after successful completion run::
-> `3_cleanup.yaml`
+To perform the actual data migration run:
+> `3_migrate-vol.yaml`
+
+To remove all parts of this demo after successful completion run:
+> `4_cleanup.yaml`
+
+To remove the Demo VM run:
+> `5_deploy-vm-fail-clean.yaml`
 
 You can clean up a `failed` prepare with:
-> `4_prepare-fail-clean.yaml`
+> `6_prepare-fail-clean.yaml`
 
 If the migration `fails` you can use the below playbook to clean up your environment;
-> `5_migration-fail-clean.yaml`
+> `7_migration-fail-clean.yaml`
 
 ## Enhancements
 At some point I'll add in the following

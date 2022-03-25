@@ -1,0 +1,25 @@
+---
+- name: Remove virtual machine
+  hosts: localhost
+  connection: local
+  gather_facts: true
+  collections:
+  - community.vmware
+  vars_files:
+    - vars.yaml
+  tasks:
+    - name: Set Fact VM for removal
+      set_fact:
+        del_vm_name: "{{ vm_name }}"
+
+    - name: Remove "{{ vm_name }}" Virtual Machine
+      vmware_guest:
+        hostname: "{{ vcenter_hostname }}"
+        username: "{{ vcenter_user }}"
+        password: "{{ vcenter_password }}"
+        validate_certs: False
+        name: "{{ del_vm_name }}"
+        state: absent
+        force: yes
+      delegate_to: localhost
+      register: facts

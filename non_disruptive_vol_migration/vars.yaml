@@ -13,11 +13,16 @@
     mount_path: /mnt/mig-test
     
 
-    vcenter_hostname: "srvvc01.purestorage.int"
-    vcenter_user: "auto@purestorage.int"
-    vcenter_password: "P@ssw0rd"
-    esxi_hostname: "mgmt-esx01.purestorage.int"
+    vcenter_hostname: "vc01.domain.int"
+    vcenter_user: "auto@domain.int"
+    vcenter_password: "PASSWORD"
+    esxi_hostname: "esx01.domain.int"
     esxi_username: "root"
-    esxi_password: "P@ssw0rd"
+    esxi_password: "PASSWORD"
     migration_datastore_name: "mig-ds-01"
     migration_datastore_type: "vmfs"
+    vm_name: "Ansible-Demo"
+    vm_template: "m-template-win-2019-pv-efi"
+    datacenter: "A"
+    vm_folder: "/DEMO"
+    customization_spec: "Windows-server-domain-join"

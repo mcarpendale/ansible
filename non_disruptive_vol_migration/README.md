@@ -63,5 +63,5 @@ If the migration `fails` you can use the below playbook to clean up your environ
 
 ## Enhancements
 At some point I'll add in the following
-- deploy VM to the datastore/volume being migrated
+- deploy VM to the datastore/volume being migrated - `added` Friday 25 March 2022
 - execute random write command on the VM to introduce load and show Active Cluster mirrored writes
